@@ -16,6 +16,55 @@ const Title = styled.label`
   }
 `;
 
+const Info = styled.h4`
+  & {
+    position: relative;
+  }
+  &::before {
+    position: absolute;
+    bottom: 100%;
+    left: 21.5%;
+    padding: 0 0 10px;
+    min-width: 200px;
+    content: attr(data-info);
+    font-size: 0.4em;
+    color: #6a7b7e;
+    opacity: 0;
+    -webkit-transition: opacity 0.3s, -webkit-transform 0.3s;
+    transition: opacity 0.3s, transform 0.3s;
+    -webkit-transform: translate3d(0, -5px, 0);
+    transform: translate3d(0, -5px, 0);
+    pointer-events: none;
+  }
+
+  &:hover::before {
+    opacity: 1;
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+  }
+
+  &::after {
+    position: relative;
+    display: inline-block;
+    margin-left: 10px;
+    width: 24px;
+    height: 24px;
+    border: 2px solid rgba(0, 0, 0, 0.4);
+    color: rgba(0, 0, 0, 0.4);
+    border-radius: 50%;
+    content: "i";
+    vertical-align: top;
+    text-align: center;
+    font-weight: 700;
+    font-style: italic;
+    font-size: 14px;
+    font-family: Georgia, serif;
+    line-height: 20px;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+`;
+
 function Result({ response }) {
   const [Risk, setRisk] = useState(null); // x
   const [Return, setReturn] = useState(null); //y
@@ -32,6 +81,7 @@ function Result({ response }) {
     let tmp_portfolio = [];
     setUserRisiko(user_data["RISIKO"]);
     setUserData(user_data);
+    console.log(user_data);
     let Portfolios = Object.keys(asJson);
 
     const keys = Object.keys(asJson["Aktien"]);
@@ -45,17 +95,6 @@ function Result({ response }) {
       }
       tmp_portfolio.push(tmp_dict);
     }
-    /*   for (const Asset of Portfolios) {
-      tmp_dict[Asset] = tmp_portfolio.push({});
-      for (const key of keys) {
-        tmp_portfolio.push({
-          Aktien: values_aktien[key],
-          Anleihen: values_anleihen[key],
-          Gold: values_gold[key],
-              Immobilien: values_immo[key], 
-        });
-      }
-    } */
 
     setRisk(asJson["Risk"]);
     setReturn(asJson["Return"]);
@@ -71,20 +110,28 @@ function Result({ response }) {
       let low = [];
       let medium = [];
       let high = [];
+
       for (const key of keys_risk) {
         let x = values_risk[key];
         let y = values_return[key];
         if (key < 7) {
           low.push({ x: x, y: y });
-          if (key == 6) {
+
+          if (userRisiko != "Mittel" && key == 6) {
             medium.push({ x: x, y: y });
           }
         } else if (key >= 7 && key < 14) {
+          if (key == 7 && userRisiko == "Mittel") {
+            low.push({ x: x, y: y });
+          }
           medium.push({ x: x, y: y });
-          if (key == 13) {
+          if (key == 13 && userRisiko != "Hoch") {
             high.push({ x: x, y: y });
           }
         } else {
+          if (key == 14 && userRisiko == "Hoch") {
+            medium.push({ x: x, y: y });
+          }
           high.push({ x: x, y: y });
         }
       }
@@ -108,12 +155,24 @@ function Result({ response }) {
   }, [Risk, Return]);
 
   const handlePointClick = (e) => {
+    console.log(e);
+    console.log(data);
     if (
       (e.index < 7 && userRisiko == "Niedrig") ||
-      (e.index >= 7 && e.index < 14 && userRisiko == "Mittel") ||
-      (e.index >= 14 && userRisiko == "Hoch")
+      (e.index > 7 && e.index < 15 && userRisiko == "Mittel") ||
+      (e.index > 15 && userRisiko == "Hoch")
     ) {
-      setSelected({ INDEX: e.index, RISIKO: e.data.x, RENDITE: e.data.y });
+      let selected_index =
+        userRisiko == "Mittel"
+          ? e.index - 1
+          : userRisiko == "Hoch"
+          ? e.index - 2
+          : e.index;
+      setSelected({
+        INDEX: selected_index,
+        RISIKO: e.data.x,
+        RENDITE: e.data.y,
+      });
     }
   };
 
@@ -121,8 +180,8 @@ function Result({ response }) {
     let index = props.point.index;
     if (
       (index < 7 && userRisiko == "Niedrig") ||
-      (index >= 7 && index < 14 && userRisiko == "Mittel") ||
-      (index >= 14 && userRisiko == "Hoch")
+      (index > 7 && index < 15 && userRisiko == "Mittel") ||
+      (index > 15 && userRisiko == "Hoch")
     ) {
       return (
         <div
@@ -136,7 +195,7 @@ function Result({ response }) {
             <strong>Risiko:</strong> {"  "}
             {props.point.data.x}, <strong>Rendite:</strong>
             {"  "}
-            {props.point.data.y}
+            {props.point.data.y}%
           </div>
         </div>
       );
@@ -144,24 +203,44 @@ function Result({ response }) {
       return null;
     }
   };
+  const format = (v) => `${v}%`;
   return (
     <Layout title='Investitionsrechner'>
       <Title className='fs-field-label'>Ihr Ergebnis </Title>
       <div style={{ height: "500px" }}>
-        {data && selected === false && (
-          <h4 style={{ textAlign: "center" }}>
-            Wählen Sie Ihr gewünschtes Risiko/Rendite Verhältnis
-          </h4>
-        )}
+        {data &&
+          selected === false &&
+          (!isNaN(userData["INVESTITIONSDAUER"]) ? (
+            <Info
+              data-info={
+                "Die angezeigten Risiken & Renditen gelten nicht für den gesamten Anlagezeitraum"
+              }
+              style={{ textAlign: "center" }}
+            >
+              Wählen Sie Ihr gewünschtes Rendite/Risiko Verhältnis
+            </Info>
+          ) : (
+            <Info style={{ textAlign: "center" }}>
+              Wählen Sie Ihr gewünschtes Rendite/Risiko Verhältnis
+            </Info>
+          ))}
         {data && selected === false ? (
           <ResponsiveLine
             theme={{
-              textColor: "white",
+              textColor: "#111",
               crosshair: { line: { strokeWidth: 3 } },
+              axis: {
+                ticks: {
+                  text: {
+                    fontSize: "1rem",
+                  },
+                },
+              },
             }}
             linewidth={20}
             data={data}
             margin={{ top: 50, right: 110, bottom: 50, left: 60 }}
+            labelFormat={format}
             xScale={{ type: "point" }}
             yScale={{
               type: "linear",
@@ -170,6 +249,7 @@ function Result({ response }) {
               stacked: false,
               reverse: false,
             }}
+            yFormat={".2%"}
             axisTop={null}
             axisRight={null}
             axisBottom={{
@@ -185,10 +265,12 @@ function Result({ response }) {
             axisLeft={{
               orient: "left",
               tickSize: 5,
+              format: format,
               tickPadding: 5,
               tickRotation: 0,
               legend: "Rendite",
-              legendOffset: -40,
+              legendOffset: 20,
+              fontSize: "1rem",
               legendPosition: "middle",
             }}
             colors={[
@@ -205,6 +287,7 @@ function Result({ response }) {
             onClick={(e) => handlePointClick(e)}
             enableArea={true}
             tooltip={(props) => renderTooltip(props)}
+            tooltipFormat={format}
             useMesh={true}
             defs={[
               linearGradientDef("Niedrig", [
@@ -254,7 +337,7 @@ function Result({ response }) {
                 anchor: "bottom-right",
                 direction: "column",
                 justify: false,
-                translateX: 100,
+                translateX: 90,
                 translateY: 0,
                 itemsSpacing: 60,
                 itemDirection: "left-to-right",
@@ -354,7 +437,7 @@ const Table = styled.div`
 `;
 const SelectedPortfolio = ({ portfolio, selected, userData }) => {
   const [formatted, setFormatted] = useState(false);
-
+  const [version, setVersion] = useState(false);
   const formatCurrentPortfolio = () => {
     let current_portfolio = JSON.parse(userData["ANLAGEKLASSEN_AMOUNT"]);
 
@@ -419,7 +502,10 @@ const SelectedPortfolio = ({ portfolio, selected, userData }) => {
   };
 
   const formatOptimalPortfolio = () => {
+    console.log(selected.INDEX);
+    console.log(portfolio);
     let optimal_portfolio = portfolio[selected.INDEX];
+    console.log(optimal_portfolio);
     let tmp = {};
     for (const key of Object.keys(optimal_portfolio)) {
       if (optimal_portfolio[key] != 0) {
@@ -430,7 +516,18 @@ const SelectedPortfolio = ({ portfolio, selected, userData }) => {
   };
   useEffect(() => {
     if (portfolio && selected && userData) {
-      // derzeitiges Portfolio formattieren
+      // derzeitiges Portfolio formattiere
+      const nicht_nur_immo_und_laenger_als_2_jahre =
+        !isNaN(userData.INVESTITIONSDAUER) &&
+        (userData.ANLAGEPRÄFERENZ == "indirekt" ||
+          userData.ANLAGEPRÄFERENZ == "Beides");
+      console.group("TT");
+      console.log(userData.INVESTITIONSDAUER);
+      console.log(userData.ANLAGEPRÄFERENZ);
+      console.log(nicht_nur_immo_und_laenger_als_2_jahre);
+      setVersion(nicht_nur_immo_und_laenger_als_2_jahre);
+      console.groupEnd();
+      console.log("userData: ", userData);
       let optimal_portfolio = formatOptimalPortfolio();
       let current_portfolio = formatCurrentPortfolio();
       let difference_portfolio = formatDifferencePortfolio(
@@ -455,8 +552,25 @@ const SelectedPortfolio = ({ portfolio, selected, userData }) => {
       if (userData.KREDIT) {
         total_invested_amount += userData.KREDIT;
       }
-      console.log(userData);
-      console.log(total_invested_amount);
+
+      let RISIKO_MONAT =
+        parseFloat(selected.RISIKO) /
+        Math.sqrt(parseFloat(userData.INVESTITIONSDAUER) * 12);
+      RISIKO_MONAT = RISIKO_MONAT / 100;
+      let RENDITE_MONAT =
+        selected.RENDITE / (parseFloat(userData.INVESTITIONSDAUER) * 12);
+      RENDITE_MONAT = RENDITE_MONAT / 100;
+
+      let RISIKO_APPROX =
+        parseFloat(selected.RISIKO) *
+        Math.sqrt(parseFloat(userData.INVESTITIONSDAUER) * 12);
+      RISIKO_APPROX = RISIKO_APPROX / 100;
+
+      let RENDITE_APPROX =
+        parseFloat(selected.RENDITE) *
+        12 *
+        parseFloat(userData.INVESTITIONSDAUER);
+      RENDITE_APPROX = RENDITE_APPROX / 100;
       setFormatted({
         RISIKO: `${selected.RISIKO}`,
         RENDITE: `${selected.RENDITE}%`,
@@ -464,18 +578,26 @@ const SelectedPortfolio = ({ portfolio, selected, userData }) => {
         INVESTITIONSDAUER_MONAT: `${
           parseFloat(userData.INVESTITIONSDAUER) * 12
         }`,
-        RISIKO_MONAT: `${(
-          parseFloat(selected.RISIKO) /
-          Math.sqrt(parseFloat(userData.INVESTITIONSDAUER) * 12)
-        ).toFixed(2)}`,
-        RENDITE_MONAT: `${(
-          (selected.RENDITE / (parseFloat(userData.INVESTITIONSDAUER) * 12)) *
-          100
-        ).toFixed(2)}`,
+        RISIKO_MONAT: RISIKO_MONAT.toLocaleString("de", {
+          style: "percent",
+          minimumFractionDigits: 2,
+        }),
+        RENDITE_MONAT: RENDITE_MONAT.toLocaleString("de", {
+          style: "percent",
+          minimumFractionDigits: 2,
+        }),
         PORTFOLIO: optimal_portfolio,
         CURRENT_PORTFOLIO: current_portfolio,
         DIFFERENCE_PORTFOLIO: difference_portfolio,
         TOTAL_INVESTED: total_invested_amount,
+        RENDITE_APPROX: RENDITE_APPROX.toLocaleString("de", {
+          style: "percent",
+          minimumFractionDigits: 2,
+        }),
+        RISIKO_APPROX: RISIKO_APPROX.toLocaleString("de", {
+          style: "percent",
+          minimumFractionDigits: 2,
+        }),
       });
     }
   }, [userData, selected, portfolio]);
@@ -490,7 +612,9 @@ const SelectedPortfolio = ({ portfolio, selected, userData }) => {
             {keys.map((val, i) => {
               return (
                 <div className='cell' key={val}>
-                  {val}
+                  {val == "Investitionsrahmen"
+                    ? "Verfügbarer Investitionsrahmen"
+                    : val}
                 </div>
               );
             })}
@@ -572,30 +696,40 @@ const SelectedPortfolio = ({ portfolio, selected, userData }) => {
   /*  const renderCurrent = () => {
     if (formatted.)
   } */
+
   return (
-    <div style={{ fontSize: "1.75rem" }}>
+    <div style={{ fontSize: "1.75rem", marginBottom: "2rem" }}>
       <p>Sehr geehrter Investor,</p>
       <p>
-        Sie habe sich für eine Rendite i. H. v. {formatted.RENDITE}% mit einem
+        Sie habe sich für eine Rendite i. H. v. {formatted.RENDITE} mit einem
         Risiko von {formatted.RISIKO} entschieden. Diese Rendite und dieses
         Risiko wurde durch Ihre Anlagepräferenzen und Ihrer gewünschten
         Haltedauer von {formatted.INVESTITIONSDAUER_JAHR} Jahren ermittelt.
-        Diese Daten beziehen sich auf die gesamte Anlegedauer Ihrer Anlagen.
+        {version
+          ? " Diese Daten stellen die monatliche Rendite und das monatliche Risiko dar."
+          : " Diese Daten beziehen sich auf die gesamte Anlegedauer Ihrer Anlagen."}
       </p>
       <p>
-        Um hiervon ein besseres Bild zu bekommen, wurde hier für Sie die Rendite
-        und das Risiko auf Monatsdaten heruntergerechnet. Diese sind jedoch
-        nicht explizit genau und nur eine grobe Angabe.
-        <br /> Ungefähres Risiko pro Monat:
-        {formatted.RISIKO_MONAT}% <br /> Ungefähre Rendite pro Monat:{" "}
-        {formatted.RENDITE_MONAT}%
+        {version
+          ? "Um hiervon ein besseres Bild zu bekommen, wurden hier für Sie die Rendite und das Risiko auf die gesamte Anlagedauer approximiert. "
+          : "Um hiervon ein besseres Bild zu bekommen, wurde hier für Sie die Rendite und das Risiko auf Monatsdaten approximiert. "}
+        Diese sind jedoch nicht explizit genau sondern nur eine grobe Angabe.
+        <br />{" "}
+        {version
+          ? "Ungefähres Risiko der gesamten Anlagedauer: " +
+            formatted.RISIKO_APPROX
+          : "Ungefähres Risiko pro Monat: " + formatted.RISIKO_MONAT}{" "}
+        {} <br />{" "}
+        {version
+          ? "Ungefähre Rendite der gesamten Anlagedauer: " +
+            formatted.RENDITE_APPROX
+          : "Ungefähre Rendite pro Monat: " + formatted.RENDITE_MONAT}
       </p>
       <p>
         Zur Erreichung dieses Risikos und dieser Rendite müssen ihre
         Portfolioanteile wie folgt ausgestaltet werden:
         <br />
       </p>
-
       {renderTable(formatted.PORTFOLIO)}
       {userData.ANLAGEKLASSEN && userData.ANLAGEKLASSEN.length > 0 && (
         <p>
@@ -641,10 +775,10 @@ const SelectedPortfolio = ({ portfolio, selected, userData }) => {
         userData.ANLAGEPRÄFERENZ == "Beides") &&
         userData.NUTZEN == "Private Mieter" && (
           <p>
-            Auf Grund dessen, dass sie derzeit eine oder mehrere Immobilien
+            Auf Grund dessen, dass Sie derzeit eine oder mehrere Immobilien
             besitzen, die an private Mieter vermietet sind, wird Ihnen
             empfohlen, dass Sie bei Ihrer nächsten Immobilieninvestition eine
-            Immobilie mit gewerblichen Mietern kaufen. Dies sollten sie tun, um
+            Immobilie mit gewerblichen Mietern kaufen. Dies sollten Sie tun, um
             das Klumpenrisko Ihrer Immobilien zu verringern und um innerhalb
             Ihrer Immobilienanlagen zu diversifizieren.
           </p>
@@ -653,7 +787,7 @@ const SelectedPortfolio = ({ portfolio, selected, userData }) => {
         userData.ANLAGEPRÄFERENZ == "Beides") &&
         userData.NUTZEN == "Beides" && (
           <p>
-            Auf Grund dessen, dass sie derzeit Immobilien mit gewerblichen und
+            Auf Grund dessen, dass Sie derzeit Immobilien mit gewerblichen und
             privaten Mietern besitzen haben Sie gut vorgesorgt, um einem
             Klumpenrisiko entgegenzuwirken. Bei Ihrer nächsten
             Immobilieninvestition können Sie also nach Belieben entscheiden, ob
@@ -669,14 +803,24 @@ const SelectedPortfolio = ({ portfolio, selected, userData }) => {
         !userData.ANLAGEKLASSEN.includes("Immobilien") && (
           <p>
             Auf Grund dessen, dass Sie derzeit keine Immobilien in Ihrem
-            Portfolio halten, wird Ihnen empfohlen bei Ihrer ersten
-            Immobilieninvestition eine Immobilie zu kaufen, die sowohl
-            gewerbliche als auch private Mieter hat, um das Klumpenrisiko der
-            Immobilie zu minimieren. Für die Reduktion dieses Risikos besteht
-            auch die Möglichkeit verschiedene Mietlaufzeiten der Mieter zu
-            vereinbaren.
+            Portfolio halten, können Sie nach Belieben entscheiden, ob Sie eine
+            Immobilie mit gewerblichen oder privaten Mietern erwerben. Um jedoch
+            das Klumpenrisiko zu senken, können sie beispielsweise verschiedene
+            Mietlaufzeiten mit den Mietern vereinbaren.
           </p>
         )}
+      {userData.IMMOBILIENVERWALTER == "Nein"
+        ? "Da Sie Ihre Immobilie selbst Verwalten möchten, muss Ihnen bewusst sein, dass dies sehr aufwendig sein kann und dabei auch unternehmerisches Handeln eine Rolle spielt. Die Verwaltung einer Immobilie ist sehr Zeitintensiv und benötigt einige Vorkenntnisse. Wenn Sie Erfahrung haben und gerne unternehmerisch Handeln, ist eine eigene Verwaltung eine gute Entscheidung für Sie. Haben Sie jedoch wenig Zeit, sowie wenig Vorkenntnisse, wäre es besser, die Verwaltung an einen Experten abzugeben. Dazu stehen Deutschlandweit zahlreiche klein und groß Firmen zur Verfügung. Hierbei muss Ihnen jedoch bewusst sein, dass die Rendite durch die Kosten des Immobilienverwalters verringert wird."
+        : "Sie möchten Ihre Immobilie lieber von einem Experten Verwalten lassen? Deutschlandweit stehen zahlreiche klein und groß Firmen zur Verfügung. Hierbei muss Ihnen jedoch bewusst sein, dass die Rendite durch die Kosten des Immobilienverwalters verringert wird."}
+      <br></br>
+      <br></br>
+      <i>
+        Vielen Danke für die Verwendung dieses Online-Tools. Die gesamten Daten
+        beruhen auf historischen Berechnungen und stellen somit keine 100%
+        zuverlässige Vorhersagen für die Zukunft dar.
+      </i>
+      <br></br>
+      <br></br>
     </div>
   );
 };

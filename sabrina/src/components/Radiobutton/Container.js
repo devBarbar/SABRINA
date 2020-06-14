@@ -8,6 +8,13 @@ const Area = styled.div`
   .area .input.active {
   }
 `;
+
+const StyledContainer = styled.div``;
+const HiddenInput = styled.input`
+  && {
+    display: none;
+  }
+`;
 function RadioButtons({
   children,
   id,
@@ -28,6 +35,7 @@ function RadioButtons({
         });
         element.parentElement.classList.add("click-effect");
         setActive(element.nextSibling.value);
+        let val = document.querySelector(`#${id}_hidden`);
       });
     });
   }, []);
@@ -48,9 +56,16 @@ function RadioButtons({
   };
 
   return (
-    <div id={id} className={`inputs radio-buttons ${className}`}>
+    <StyledContainer id={id} className={`inputs radio-buttons ${className}`}>
       <Area className='area'>{setName(children)}</Area>
-    </div>
+      <HiddenInput
+        id={`${id}_hidden`}
+        className='hidden'
+        value={active}
+        hidden
+        required
+      ></HiddenInput>
+    </StyledContainer>
   );
 }
 

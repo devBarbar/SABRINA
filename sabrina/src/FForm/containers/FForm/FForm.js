@@ -89,6 +89,7 @@ class FForm extends React.PureComponent {
     const inputs =
       frame.querySelectorAll("input[required]") ||
       frame.querySelector("textarea[required]") ||
+      frame.querySelector("div.radio-buttons input.hidden") ||
       frame.querySelector("select[required]");
     if (inputs.length === 0) return true;
 
@@ -100,6 +101,7 @@ class FForm extends React.PureComponent {
           if (input.value === "") {
             error = "NOVAL";
           }
+
           break;
 
         case "select":

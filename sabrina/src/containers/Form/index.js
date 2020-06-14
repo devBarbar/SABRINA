@@ -17,21 +17,21 @@ function Index() {
   const [amount, setAmount] = useState({});
   const [response, setResponse] = useState(null);
   const [investitionsdauer, setInvestitionsdauer] = useState();
-  const [langeInvestitionsdauer, setLangeInvestitionsdauer] = useState();
+  const [langeInvestitionsdauer, setLangeInvestitionsdauer] = useState("");
   const höheKreditRef = useRef();
   const [Investitionsrahmen, setInvestitionsrahmen] = useState("");
   const InvestitionrahmenRef = useRef();
   const [hatKredit, setHatKredit] = useState("");
   const [Kredit, setKredit] = useState("");
   const [nutzen, setNutzen] = useState("");
-  const [anlageverwalter, setAnlageverwalter] = useState("");
+  const [Immobilienverwalter, setImmobilienverwalter] = useState("");
   const [Risikobereitschaft, setRisikobereitschaft] = useState("");
   const [anlagepräferenzen, setAnlagePräferenzen] = useState("");
-  const alert = useAlert();
+  const thealert = useAlert();
 
   useEffect(() => {
     if (investitionsdauer == "Mehr als 2 Jahre") {
-      alert.show(
+      thealert.show(
         "Berechnungen bei längeren Anlagedauern basieren auf Approximationen der Monatsdaten "
       );
     }
@@ -43,7 +43,7 @@ function Index() {
       <Frame
         key={value}
         id={value}
-        title={`Wie hoch ist der Wert Ihrer ${value}`}
+        title={`Wie hoch ist der Wert Ihrer ${value}?`}
       >
         <input
           required
@@ -85,7 +85,80 @@ function Index() {
       }
     });
   };
-
+  const amountAktienRef = useRef();
+  const amountAktienHandler = (e) => {
+    setAmount({ ...amount, ["Aktien"]: e.target.value });
+    amountAktienRef.current.addEventListener("keydown", function (e) {
+      if (e.keyCode === 13 && isNaN(e.target.value) === false) {
+        setAmount({ ...amount, ["Aktien"]: format_euro(e.target.value) });
+      }
+    });
+  };
+  const amountImmoRef = useRef();
+  const amountImmoHandler = (e) => {
+    setAmount({ ...amount, ["Immobilien"]: e.target.value });
+    amountImmoRef.current.addEventListener("keydown", function (e) {
+      if (e.keyCode === 13 && isNaN(e.target.value) === false) {
+        setAmount({ ...amount, ["Immobilien"]: format_euro(e.target.value) });
+      }
+    });
+  };
+  const amountAnleihenRef = useRef();
+  const amountAnleihenHandler = (e) => {
+    setAmount({ ...amount, ["Anleihen"]: e.target.value });
+    amountAnleihenRef.current.addEventListener("keydown", function (e) {
+      if (e.keyCode === 13 && isNaN(e.target.value) === false) {
+        setAmount({ ...amount, ["Anleihen"]: format_euro(e.target.value) });
+      }
+    });
+  };
+  const amountRohstoffeRef = useRef();
+  const amountRohstoffeHandler = (e) => {
+    setAmount({ ...amount, ["Rohstoffe"]: e.target.value });
+    amountRohstoffeRef.current.addEventListener("keydown", function (e) {
+      if (e.keyCode === 13 && isNaN(e.target.value) === false) {
+        setAmount({ ...amount, ["Rohstoffe"]: format_euro(e.target.value) });
+      }
+    });
+  };
+  const amountImmobilienfondsRef = useRef();
+  const amountImmobilienfondsHandler = (e) => {
+    setAmount({ ...amount, ["Immobilienfonds"]: e.target.value });
+    amountImmobilienfondsRef.current.addEventListener("keydown", function (e) {
+      if (e.keyCode === 13 && isNaN(e.target.value) === false) {
+        setAmount({
+          ...amount,
+          ["Immobilienfonds"]: format_euro(e.target.value),
+        });
+      }
+    });
+  };
+  const amountDeutscheReitsRef = useRef();
+  const amountDeutscheReitsHandler = (e) => {
+    setAmount({ ...amount, ["Deutsche REITs"]: e.target.value });
+    amountDeutscheReitsRef.current.addEventListener("keydown", function (e) {
+      if (e.keyCode === 13 && isNaN(e.target.value) === false) {
+        setAmount({
+          ...amount,
+          ["Deutsche REITs"]: format_euro(e.target.value),
+        });
+      }
+    });
+  };
+  const amountAmerikanischeReitsRef = useRef();
+  const amountAmerikanischeReitsHandler = (e) => {
+    setAmount({ ...amount, ["Amerikanische REITs"]: e.target.value });
+    amountAmerikanischeReitsRef.current.addEventListener("keydown", function (
+      e
+    ) {
+      if (e.keyCode === 13 && isNaN(e.target.value) === false) {
+        setAmount({
+          ...amount,
+          ["Amerikanische REITs"]: format_euro(e.target.value),
+        });
+      }
+    });
+  };
   //----------------------------------------------------------------
   // RADIOBUTTONS
   //----------------------------------------------------------------
@@ -101,13 +174,21 @@ function Index() {
     amount,
     Investitionsrahmen:
       Investitionsrahmen != "" && localStringToNumber(Investitionsrahmen),
-    anlageverwalter,
+    Immobilienverwalter,
     Risikobereitschaft,
     anlagepräferenzen,
   };
 
   const submitHandler = useCallback(
     (e) => {
+      let key_amount = Object.keys(amount);
+      let val_amount = Object.values(amount);
+
+      for (let key of key_amount) {
+        console.log(key);
+        console.log(amount[key]);
+        amount[key] = localStringToNumber(amount[key]);
+      }
       e.preventDefault();
       const requestOptions = {
         method: "POST",
@@ -131,13 +212,14 @@ function Index() {
       <Frame
         dataInfo='In Jahren'
         id='test'
-        title='Wie lange möchten Sie Investieren ?'
+        title='Wie lange möchten Sie investieren ?'
       >
         <RadioButtons
           selected={investitionsdauer}
           setSelected={setInvestitionsdauer}
           name='Investitiondauer'
           id='Investitiondauer'
+          required={true}
         >
           <RadioButton>1 Monat</RadioButton>
           <RadioButton>1 Quartal</RadioButton>
@@ -159,20 +241,27 @@ function Index() {
       >
         <input
           value={langeInvestitionsdauer}
+          placeholder='in Jahren '
+          required
           onChange={(e) => setLangeInvestitionsdauer(e.target.value)}
         ></input>
       </Frame>
-      <Frame id='test' title='Wie hoch ist Ihr gewünschter Investitionsrahmen'>
+      <Frame
+        dataInfo='Hier bitte gewünschtes Eigenkapital in Euro angeben'
+        id='test'
+        title='Wie hoch ist Ihr gewünschter Investitionsrahmen ?'
+      >
         <input
           ref={InvestitionrahmenRef}
           value={Investitionsrahmen}
-          placeholder='in €'
+          placeholder='in Euro'
           onChange={investitionsrahmenHandler}
           required
         ></input>
       </Frame>
       <Frame
         id='test2'
+        dataInfo='Durch Hinzunahmne eines Kredits erhöht sich der Gesamtinvestitionsrahmen'
         title='Möchten Sie zusätzlich zu Ihrem Investitionsrahmen einen Kredit aufnehmen ?'
       >
         <RadioButtons
@@ -187,6 +276,7 @@ function Index() {
       </Frame>
       {hatKredit == "Ja" && (
         <Frame
+          dataInfo='in Euro'
           id='test'
           title='In welcher Höhe möchsten Sie einen Kredit aufnehmen?'
         >
@@ -194,7 +284,7 @@ function Index() {
             ref={höheKreditRef}
             value={Kredit}
             onChange={(e) => höheKreditHandler(e)}
-            placeholder='in €'
+            placeholder='in Euro'
             required
           ></input>
         </Frame>
@@ -217,11 +307,122 @@ function Index() {
       {/********************************
        * Immobilien
        ********************************/}
-      {renderAmout()}
+      <Frame
+        key={"Aktien"}
+        id={"Aktien"}
+        dataInfo='in Euro'
+        title={`Wie hoch ist der Wert Ihrer Aktien?`}
+        show={anlageklassen.includes("Aktien")}
+      >
+        <input
+          classname='asset--amount'
+          ref={amountAktienRef}
+          required
+          value={amount["Aktien"]}
+          onChange={amountAktienHandler}
+          placeholder='in Euro'
+        ></input>
+      </Frame>
+      <Frame
+        dataInfo='in Euro'
+        key={"Immobilien"}
+        id={"Immobilien"}
+        title={`Wie hoch ist der Wert Ihrer Immobilien?`}
+        show={anlageklassen.includes("Immobilien")}
+      >
+        <input
+          required
+          classname='asset--amount'
+          value={amount["Immobilien"]}
+          onChange={amountImmoHandler}
+          ref={amountImmoRef}
+          placeholder='in Euro'
+        ></input>
+      </Frame>
+      <Frame
+        dataInfo='in Euro'
+        key={"Anleihen"}
+        id={"Anleihen"}
+        title={`Wie hoch ist der Wert Ihrer Anleihen?`}
+        show={anlageklassen.includes("Anleihen")}
+      >
+        <input
+          ref={amountAnleihenRef}
+          required
+          classname='asset--amount'
+          value={amount["Anleihen"]}
+          onChange={amountAnleihenHandler}
+          placeholder='in Euro'
+        ></input>
+      </Frame>
+      <Frame
+        dataInfo='in Euro'
+        key={"Rohstoffe"}
+        id={"Rohstoffe"}
+        title={`Wie hoch ist der Wert Ihrer Rohstoffe?`}
+        show={anlageklassen.includes("Rohstoffe")}
+      >
+        <input
+          ref={amountRohstoffeRef}
+          required
+          classname='asset--amount'
+          value={amount["Rohstoffe"]}
+          onChange={amountRohstoffeHandler}
+          placeholder='in Euro'
+        ></input>
+      </Frame>
+      <Frame
+        dataInfo='in Euro'
+        key={"Immobilienfonds"}
+        id={"Immobilienfonds"}
+        title={`Wie hoch ist der Wert Ihrer Immobilienfonds?`}
+        show={anlageklassen.includes("Immobilienfonds")}
+      >
+        <input
+          ref={amountImmobilienfondsRef}
+          required
+          classname='asset--amount'
+          value={amount["Immobilienfonds"]}
+          onChange={amountImmobilienfondsHandler}
+          placeholder='in Euro'
+        ></input>
+      </Frame>
+      <Frame
+        dataInfo='in Euro'
+        key={"Deutschen REITs"}
+        id={"Deutschen REITs"}
+        title={`Wie hoch ist der Wert Ihrer Deutschen REITs?`}
+        show={anlageklassen.includes("Deutsche REITs")}
+      >
+        <input
+          ref={amountDeutscheReitsRef}
+          required
+          classname='asset--amount'
+          value={amount["Deutsche REITs"]}
+          onChange={amountDeutscheReitsHandler}
+          placeholder='in Euro'
+        ></input>
+      </Frame>
+      <Frame
+        dataInfo='in Euro'
+        key={"Amerikanischen REITs"}
+        id={"Amerikanischen REITs"}
+        title={`Wie hoch ist der Wert Ihrer Amerikanischen REITs?`}
+        show={anlageklassen.includes("Amerikanische REITs")}
+      >
+        <input
+          ref={amountAmerikanischeReitsRef}
+          required
+          classname='asset--amount'
+          value={amount["Amerikanische REITs"]}
+          onChange={amountAmerikanischeReitsHandler}
+          placeholder='in Euro'
+        ></input>
+      </Frame>
 
       <Frame
         id='Nutzen_Radio'
-        title='Wie ist die derzeitige Vermietung / Nutzung der Immobilien'
+        title='Wie ist die derzeitige Vermietung / Nutzung der Immobilien?'
         show={anlageklassen.includes("Immobilien")}
       >
         <RadioButtons
@@ -237,7 +438,7 @@ function Index() {
         </RadioButtons>
       </Frame>
       <Frame
-        show={anlageklassen.includes("Immobilien")}
+        show={langeInvestitionsdauer === ""}
         id='test'
         title='Was sind Ihre Anlagepräferenzen?'
       >
@@ -252,6 +453,23 @@ function Index() {
           <RadioButton>Beides</RadioButton>
         </RadioButtons>
       </Frame>
+      <Frame
+        show={langeInvestitionsdauer !== ""}
+        id='test'
+        title='Was sind Ihre Anlagepräferenzen?'
+      >
+        <RadioButtons
+          selected={anlagepräferenzen}
+          setSelected={setAnlagePräferenzen}
+          name='Präferenz'
+          id='Präferenz'
+        >
+          <RadioButton>Indirekte Immobilienanlage</RadioButton>
+          <RadioButton value='Beides'>
+            Direkte & Indirekte Immobilienanlage
+          </RadioButton>
+        </RadioButtons>
+      </Frame>
 
       <Frame
         show={
@@ -259,20 +477,20 @@ function Index() {
           anlagepräferenzen == "Beides"
         }
         id='test'
-        title='Benötigen sie einen Anlageverwalter?'
+        title='Benötigen Sie einen Immobilienverwalter?'
       >
         <RadioButtons
-          selected={anlageverwalter}
-          setSelected={setAnlageverwalter}
-          name='Anlageverwalter'
-          id='Anlageverwalter'
+          selected={Immobilienverwalter}
+          setSelected={setImmobilienverwalter}
+          name='Immobilienverwalter'
+          id='Immobilienverwalter'
         >
           <RadioButton>Ja</RadioButton>
           <RadioButton>Nein</RadioButton>
         </RadioButtons>
       </Frame>
 
-      <Frame id='test' title='Wie Risikobereit sind sie?'>
+      <Frame id='test' title='Wie Risikobereit sind Sie?'>
         <RadioButtons
           selected={Risikobereitschaft}
           setSelected={setRisikobereitschaft}

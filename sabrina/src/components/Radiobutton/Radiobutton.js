@@ -24,12 +24,12 @@ const StyledRadioButton = styled.span`
       display: none;
     }
     label {
-      font-weight: 400;
-      color: #fff;
+      font-weight: 700;
+      color: #111;
       text-align: center;
       text-transform: uppercase;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 16px;
       z-index: 3;
       transition: 300ms;
       height: 45px;
@@ -50,7 +50,7 @@ const StyledRadioButton = styled.span`
     background: #26a79a;
   }
 `;
-export function Radiobutton({ children, name, selected, required }) {
+export function Radiobutton({ children, name, selected, required, value }) {
   return (
     <StyledRadioButton className='input'>
       <label htmlFor={children.replace(/\s/g, "")}> {children}</label>
@@ -58,7 +58,7 @@ export function Radiobutton({ children, name, selected, required }) {
         selected={selected === children}
         name={name}
         required={required}
-        value={children}
+        value={value ? value : children}
         type='radio'
         id={children.replace(/\s/g, "")}
       ></input>

@@ -22,7 +22,7 @@ def add_movie():
     if data["anlagepräferenzen"] == "Indirekte Immobilienanlage":
 
         solver_data = pd.read_excel(
-            f"api/nur_indirekt\{xlsFile}.xlsm",
+            f"api/DATA/nur_indirekt\{xlsFile}.xlsm",
             sheet_name="Result",
             usecols="A:H",
             nrows=21,
@@ -34,7 +34,7 @@ def add_movie():
         )
     elif data["anlagepräferenzen"] == "Beides":
         solver_data = pd.read_excel(
-            f"api\Mit_Immo_statt_RX\{xlsFile}.xlsm",
+            f"api\DATA/Mit_Immo_statt_RX\{xlsFile}.xlsm",
             sheet_name="Result",
             usecols="A:H",
             nrows=21,
@@ -46,7 +46,7 @@ def add_movie():
         )
     else:
         solver_data = pd.read_excel(
-            "api\PortfolioOptimierung_4_Immodirekt_2_Jahre.xlsm",
+            "api/DATA/nur_immo/2Jahre.xlsm",
             sheet_name="Result",
             usecols="A:F",
             nrows=21,
@@ -86,7 +86,7 @@ def add_movie():
         "NUTZEN": data["nutzen"],
         "ANLAGEKLASSEN": data["anlageklassen"],
         "ANLAGEKLASSEN_AMOUNT": json.dumps(data["amount"]),
-        "ANLAGEVERWALTER": data["anlageverwalter"],
+        "IMMOBILIENVERWALTER": data["Immobilienverwalter"],
         "RISIKOBEREITSCHAFT": data["Risikobereitschaft"],
         "ANLAGEPRÄFERENZ": data["anlagepräferenzen"],
     }
