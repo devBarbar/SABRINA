@@ -13,6 +13,7 @@ const theme = {
 ReactDOM.render(
   <React.StrictMode>
     <Helmet>
+      <base href='%PUBLIC_URL%/' />
       <script
         src='https://s3-us-west-2.amazonaws.com/s.cdpn.io/103389/classie.js'
         type='text/javascript'
