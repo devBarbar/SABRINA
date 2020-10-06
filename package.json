@@ -2,7 +2,6 @@
   "name": "sabrina",
   "version": "0.1.0",
   "private": true,
-  "homepage": "/projects/bachelor/",
   "dependencies": {
     "@nivo/line": "^0.62.0",
     "@testing-library/jest-dom": "^4.2.4",
