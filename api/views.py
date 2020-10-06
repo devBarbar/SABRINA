@@ -4,10 +4,6 @@ import matplotlib.pyplot as plt
 
 main = Blueprint("main", __name__)
 
-@main.route('/')
-def index():
-    return main.send_static_file('index.html')
-
 @main.route("/add_movie", methods=["POST"])
 def add_movie():
     data = request.get_json()
